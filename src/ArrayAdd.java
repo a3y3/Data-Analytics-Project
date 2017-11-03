@@ -2,13 +2,13 @@
  * Created by Soham on 11-Oct-17.
  */
 public class ArrayAdd {
+    double threshold_value = 0.5;
     public static void main(String args[]) {
         double dataArray[] = new double[10];
         double sum = 0.0;
         int ctr = 0;
         int tremors = 0;
         int quake_counter = 0;
-        double threshold_value = 0.0;
         while (true) {
             for (int i = dataArray.length - 1; i >= 0; i--) {
                 if (i == 0) dataArray[0] = 0;
@@ -20,7 +20,8 @@ public class ArrayAdd {
             }
             sum -= Math.floor(sum);
             System.out.println("Value recorded :" + sum);
-            if (sum >= threshold_value)     //threshold value will come from net (?)
+            ArrayAdd arrayAdd = new ArrayAdd();
+            if (sum >= 0.5)     //threshold value will come from net (?)
                 tremors++;
             else {
                 System.out.println();
@@ -35,5 +36,8 @@ public class ArrayAdd {
             ctr++;      //TODO: Remove in final implementation
             if (ctr >= 100) break;
         }
+    }
+    private double calculateDynamicThreshold(double dataArray[]){
+        return threshold_value;
     }
 }
