@@ -15,7 +15,7 @@ public class QuakeDetector {
     double mHiddenSecondLayerSummation[][] = new double[mDatasetsPerEpoch][mHiddenSecondLayerNeurons];
     double mOutputLayerWeights[][] = new double[mDatasetsPerEpoch][mDatasetsPerEpoch];
 
-    double dataArray[] = new double[100];
+    double dataArray[][] = new double[1][100];
 
     //TODO: Hard coded threshold value, neural network should return actual value in prod.
     double threshold_value = 0.5;
@@ -32,15 +32,16 @@ public class QuakeDetector {
         int quake_counter = 0;                  //The number of quakes.
 
         initializeDataArray();
+        trainNetwork();
 
         while (true) {
             for (int i = dataArray.length - 1; i >= 0; i--) {
-                if (i == 0) dataArray[0] = 0;
+                if (i == 0) dataArray[0][0] = 0;
                 else dataArray[i] = dataArray[i - 1];
             }
-            dataArray[0] = returnNextValueFromFile();
-            for (double i : dataArray) {
-                sum += i;
+            dataArray[0][0] = returnNextValueFromFile();
+            for (double i[] : dataArray) {
+                sum += i[0];
             }
             sum -= Math.floor(sum);                         //Average
             if (sum >= calculateDynamicThreshold(dataArray)) {     //threshold value will come from the net.
@@ -67,15 +68,21 @@ public class QuakeDetector {
 
     private void initializeDataArray() {
         for (int i = 0; i < dataArray.length; i++) {
-            dataArray[i] = Math.random();
+            dataArray[0][i] = Math.random();
         }
+    }
+
+    private void trainNetwork(){
+        int yes = 1;
+        int no = 0;
+        //mHiddenFirstLayerSummation = matrixMultiply(dataArray);
     }
 
     private double returnNextValueFromFile() {
         return Math.random();                   //TODO: Prod will return next value from data file
     }
 
-    private double calculateDynamicThreshold(double dataArray[]) {
+    private double calculateDynamicThreshold(double[][] dataArray) {
         return threshold_value;
     }
 }
