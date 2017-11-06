@@ -92,6 +92,7 @@ public class QuakeDetector {
         System.out.println("Threshold is" + mOutputLayerSummation[0][0] + ". Correcting error now...");
         error = getDesiredOutput(dataArray) - mOutputLayerSummation[0][0];
 
+
         //Start backpropogate. Output neuron is only one and hence doesn't need any separate function.
         double delta = error * (mOutputLayerSummation[0][0]) * (1 - mOutputLayerSummation[0][0]);
         for (int i = 0; i < mHiddenSecondLayerNeurons; i++) {
@@ -99,7 +100,25 @@ public class QuakeDetector {
         }
 
         //Calculate delta for second hidden layer (the one with 30 neurons)
+        for (int i = 0; i < mHiddenSecondLayerNeurons; i++) {
+            deltaSecondLayer[i] = mSecondLayerSummation[0][i] * (1 - mSecondLayerSummation[0][i])
+                    * mSecondLayerWeights[i][0]
+                    * delta;
+        }
 
+        //Update weights for second layer
+        for (int i = 0; i < mHiddenSecondLayerNeurons; i++) {
+            for (int j = 0; j < mHiddenFirstLayerNeurons; j++) {
+                mSecondLayerWeights[j][i] += learningRate * deltaSecondLayer[i] * mFirstLayerSummation[0][j];
+            }
+        }
+
+        //Calculate delta for the first hidden layer (the one with 60 neurons)
+        for (int i = 0; i < mHiddenFirstLayerNeurons; i++) {
+            deltaFirstLayer[i] = mSecondLayerSummation[0][i] * (1 - mSecondLayerSummation[0][i])
+                    * mSecondLayerWeights[i][0]
+                    * delta;
+        }
 
     }
 
