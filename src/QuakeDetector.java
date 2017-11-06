@@ -1,3 +1,5 @@
+import java.io.*;
+
 /**
  * Created by Soham on 11-Oct-17.
  */
@@ -7,7 +9,7 @@ public class QuakeDetector {
     int mInputLayerNeurons = 100;
     int mHiddenFirstLayerNeurons = 60;
     int mHiddenSecondLayerNeurons = 30;
-    double learningRate = 2.5;
+    double learningRate = 1.5;
 
     double error;
 
@@ -42,14 +44,60 @@ public class QuakeDetector {
         initializeArray(mSecondLayerWeights, mHiddenFirstLayerNeurons, mHiddenSecondLayerNeurons);
         initializeArray(mOutputLayerWeights, mHiddenSecondLayerNeurons, mDatasetsPerEpoch);
 
-        initializeArrayWithZeroes(dataArray, mDatasetsPerEpoch, mInputLayerNeurons);
+        //initializeArrayWithZeroes(dataArray, mDatasetsPerEpoch, mInputLayerNeurons);
 
 
-        int trainCounter = 0;
-        while(trainCounter != 80000){
-            trainNetwork();
-            trainCounter ++;
+        int trainCounterInner = 0;
+        int trainCounterOuter = 0;
+        while (trainCounterOuter != 35) {
+            while (trainCounterInner != 60000) {
+                trainNetwork();
+                trainCounterInner++;
+                System.out.print("train counter inner:"+trainCounterInner);
+                System.out.print(" train counter outer:"+trainCounterOuter+" ");
+            }
+            trainCounterOuter++;
+            trainCounterInner = 0;
+            initializeArray(dataArray, mDatasetsPerEpoch, mInputLayerNeurons);
         }
+        checkOutput();
+        checkOutput();
+        checkOutput();
+        checkOutput();
+        checkOutput();
+        checkOutput();
+        checkOutput();
+        initializeArrayWithZeroes(dataArray, mDatasetsPerEpoch, mInputLayerNeurons);
+        trainNetwork();
+        checkOutput();
+        checkOutput();
+        checkOutput();
+        checkOutput();
+        checkOutput();
+        checkOutput();
+        checkOutput();
+        try {
+            ObjectOutputStream out = new ObjectOutputStream(
+                    new FileOutputStream("D:\\dataArray.ser")
+            );
+            out.writeObject(dataArray);
+            out.flush();
+            out.close();
+        }
+        catch (IOException e){
+            System.out.println("IOException:"+e);
+        }
+
+        try {
+            ObjectInputStream in = new ObjectInputStream(new FileInputStream("D:\\dataArray.ser"));
+            double[][] array = (double[][]) in.readObject();
+            in.close();
+            dataArray = array;
+        }
+        catch (Exception e){
+            System.out.println("IOException:"+e);
+        }
+
         /*while (true) {
             for (int i = dataArray.length - 1; i >= 0; i--) {
                 if (i == 0) dataArray[0][0] = 0;
@@ -84,7 +132,7 @@ public class QuakeDetector {
 
     private void initializeArray(double[][] array, int m, int n) {
         for (int i = 0; i < m; i++) {
-            for(int j = 0;  j< n; j++) {
+            for (int j = 0; j < n; j++) {
                 array[i][j] = Math.random();
             }
         }
@@ -92,7 +140,7 @@ public class QuakeDetector {
 
     private void initializeArrayWithZeroes(double[][] array, int m, int n) {
         for (int i = 0; i < m; i++) {
-            for(int j = 0;  j< n; j++) {
+            for (int j = 0; j < n; j++) {
                 array[i][j] = 0;
             }
         }
@@ -102,12 +150,12 @@ public class QuakeDetector {
         mFirstLayerSummation = matrixMultiply(dataArray, mFirstLayerWeights, mDatasetsPerEpoch, mInputLayerNeurons, mInputLayerNeurons, mHiddenFirstLayerNeurons);
         mSecondLayerSummation = matrixMultiply(mFirstLayerSummation, mSecondLayerWeights, mDatasetsPerEpoch, mHiddenFirstLayerNeurons, mHiddenFirstLayerNeurons, mHiddenSecondLayerNeurons);
         mOutputLayerSummation = matrixMultiply(mSecondLayerSummation, mOutputLayerWeights, mDatasetsPerEpoch, mHiddenSecondLayerNeurons, mHiddenSecondLayerNeurons, mDatasetsPerEpoch);
-        System.out.println("Threshold is" + mOutputLayerSummation[0][0] + ". Correcting error now...");
-        error = getDesiredOutput(dataArray) - mOutputLayerSummation[0][0];
-
+        double desiredOutput = getDesiredOutput(dataArray);
+        error = desiredOutput - mOutputLayerSummation[0][0];
+        System.out.println("y is" + mOutputLayerSummation[0][0] + ", d is " + desiredOutput);
 
         //Start back propagate. Output neuron is only one and hence doesn't need any separate function.
-        double delta = error * (mOutputLayerSummation[0][0]) * (1 - mOutputLayerSummation[0][0]); 
+        double delta = error * (mOutputLayerSummation[0][0]) * (1 - mOutputLayerSummation[0][0]);
         for (int i = 0; i < mHiddenSecondLayerNeurons; i++) {
             mOutputLayerWeights[i][0] += learningRate * delta * mSecondLayerSummation[0][i];
         }
@@ -115,7 +163,7 @@ public class QuakeDetector {
         //Calculate delta for second hidden layer (the one with 30 neurons)
         for (int i = 0; i < mHiddenSecondLayerNeurons; i++) {
             deltaSecondLayer[i] = mSecondLayerSummation[0][i] * (1 - mSecondLayerSummation[0][i])
-                    * mSecondLayerWeights[i][0]
+                    * mOutputLayerWeights[i][0]
                     * delta;
         }
 
@@ -127,12 +175,12 @@ public class QuakeDetector {
         }
 
         //Calculate delta for the first hidden layer (the one with 60 neurons)
-        for(int z = 0 ; z < mHiddenFirstLayerNeurons; z++) {
+        for (int z = 0; z < mHiddenFirstLayerNeurons; z++) {
             deltaFirstLayer[z] = mFirstLayerSummation[0][z] * (1 - mFirstLayerSummation[0][z]);
             double weightDeltaSum = 0.0;
-            for (int i = 0; i < mHiddenSecondLayerNeurons; i++) {
-                for (int j = 0; j < mHiddenFirstLayerNeurons; j++) {
-                    weightDeltaSum += deltaSecondLayer[i] * mSecondLayerWeights[j][i];
+            for (int i = 0; i < mHiddenFirstLayerNeurons; i++) {
+                for (int j = 0; j < mHiddenSecondLayerNeurons; j++) {
+                    weightDeltaSum += deltaSecondLayer[j] * mSecondLayerWeights[i][j];
                 }
             }
             deltaFirstLayer[z] *= weightDeltaSum;
@@ -147,17 +195,14 @@ public class QuakeDetector {
 
     }
 
-    private double[][] matrixMultiply(double[][] first, double[][] second, int m, int n, int p, int q ){
+    private double[][] matrixMultiply(double[][] first, double[][] second, int m, int n, int p, int q) {
         int c, d, k;
         double sum = 0.0;
-        double[][] multiply = new double [m][q];
-        for ( c = 0 ; c < m ; c++ )
-        {
-            for ( d = 0 ; d < q ; d++ )
-            {
-                for ( k = 0 ; k < p ; k++ )
-                {
-                    sum = sum + first[c][k]*second[k][d];
+        double[][] multiply = new double[m][q];
+        for (c = 0; c < m; c++) {
+            for (d = 0; d < q; d++) {
+                for (k = 0; k < p; k++) {
+                    sum = sum + first[c][k] * second[k][d];
                 }
 
                 multiply[c][d] = activationFunction(sum);
@@ -167,8 +212,8 @@ public class QuakeDetector {
         return multiply;
     }
 
-    private double activationFunction(double v){
-        return (1/(1+(Math.exp(-v))));
+    private double activationFunction(double v) {
+        return (1 / (1 + (Math.exp(-v))));
     }
 
     private double returnNextValueFromFile() {
@@ -179,13 +224,19 @@ public class QuakeDetector {
         return threshold_value;
     }
 
-    private int getDesiredOutput(double [][] dataArray){
-        double sum = 0.0;
-        for (double i[] : dataArray) {
-            sum += i[0];
+    private int getDesiredOutput(double[][] dataArray) {
+        double arraySum = 0.0;
+        for (int i = 0; i < mInputLayerNeurons; i++) {
+            arraySum += dataArray[0][i];
         }
-        sum -= Math.floor(sum);
-        if(sum >= 0.5) return 1;
+        arraySum -= Math.floor(arraySum);
+        if (arraySum >= 0.5) return 1;
         else return 0;
+    }
+
+    private void checkOutput() {
+        System.out.println("Checking output...");
+        initializeArray(dataArray, mDatasetsPerEpoch, mInputLayerNeurons);
+        trainNetwork();
     }
 }
