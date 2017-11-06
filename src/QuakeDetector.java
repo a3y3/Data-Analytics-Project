@@ -8,6 +8,7 @@ public class QuakeDetector {
     int mHiddenFirstLayerNeurons = 60;
     int mHiddenSecondLayerNeurons = 30;
     int mOutputLayerNeurons = 1;
+    double learningRate = 0.3;
 
     double error;
 
@@ -17,6 +18,9 @@ public class QuakeDetector {
     double mSecondLayerSummation[][] = new double[mDatasetsPerEpoch][mHiddenSecondLayerNeurons];
     double mOutputLayerWeights[][] = new double[mHiddenSecondLayerNeurons][mDatasetsPerEpoch];
     double mOutputLayerSummation[][] = new double[mDatasetsPerEpoch][mDatasetsPerEpoch];
+
+    double deltaSecondLayer[] = new double[mHiddenSecondLayerNeurons];
+    double deltaFirstLayer[] = new double[mHiddenFirstLayerNeurons];
 
     double dataArray[][] = new double[1][100];
 
@@ -81,14 +85,22 @@ public class QuakeDetector {
         }
     }
 
-    private void trainNetwork(){
-        int yes = 1;
-        int no = 0;
+    private void trainNetwork() {
         mFirstLayerSummation = matrixMultiply(dataArray, mFirstLayerWeights, mDatasetsPerEpoch, mInputLayerNeurons, mInputLayerNeurons, mHiddenFirstLayerNeurons);
         mSecondLayerSummation = matrixMultiply(mFirstLayerSummation, mSecondLayerWeights, mDatasetsPerEpoch, mHiddenFirstLayerNeurons, mHiddenFirstLayerNeurons, mHiddenSecondLayerNeurons);
         mOutputLayerSummation = matrixMultiply(mSecondLayerSummation, mOutputLayerWeights, mDatasetsPerEpoch, mHiddenSecondLayerNeurons, mHiddenSecondLayerNeurons, mDatasetsPerEpoch);
-        System.out.println("Threshold for this array is" + mOutputLayerSummation[0][0]);
-        error = 1;
+        System.out.println("Threshold is" + mOutputLayerSummation[0][0] + ". Correcting error now...");
+        error = getDesiredOutput(dataArray) - mOutputLayerSummation[0][0];
+
+        //Start backpropogate. Output neuron is only one and hence doesn't need any separate function.
+        double delta = error * (mOutputLayerSummation[0][0]) * (1 - mOutputLayerSummation[0][0]);
+        for (int i = 0; i < mHiddenSecondLayerNeurons; i++) {
+            mOutputLayerWeights[i][0] += learningRate * delta * mSecondLayerSummation[0][i];
+        }
+
+        //Calculate delta for second hidden layer (the one with 30 neurons)
+
+
     }
 
     private double[][] matrixMultiply(double[][] first, double[][] second, int m, int n, int p, int q ){
