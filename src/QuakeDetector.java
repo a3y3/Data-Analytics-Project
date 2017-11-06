@@ -49,7 +49,7 @@ public class QuakeDetector {
 
         int trainCounterInner = 0;
         int trainCounterOuter = 0;
-        while (trainCounterOuter != 35) {
+        while (trainCounterOuter != 70) {
             while (trainCounterInner != 60000) {
                 trainNetwork();
                 trainCounterInner++;
@@ -77,12 +77,24 @@ public class QuakeDetector {
         checkOutput();
         checkOutput();
         try {
-            ObjectOutputStream out = new ObjectOutputStream(
-                    new FileOutputStream("D:\\dataArray.ser")
+            ObjectOutputStream out1 = new ObjectOutputStream(
+                    new FileOutputStream("D:\\firstLayerWeights.ser")
             );
-            out.writeObject(dataArray);
-            out.flush();
-            out.close();
+            ObjectOutputStream out2 = new ObjectOutputStream(
+                    new FileOutputStream("D:\\secondLayerWeights.ser")
+            );
+            ObjectOutputStream out3 = new ObjectOutputStream(
+                    new FileOutputStream("D:\\outputLayerWeights.ser")
+            );
+            out1.writeObject(mFirstLayerWeights);
+            out2.writeObject(mSecondLayerWeights);
+            out3.writeObject(mOutputLayerWeights);
+            out1.flush();
+            out1.close();
+            out2.flush();
+            out2.close();
+            out3.flush();
+            out3.close();
         }
         catch (IOException e){
             System.out.println("IOException:"+e);
@@ -92,7 +104,7 @@ public class QuakeDetector {
             ObjectInputStream in = new ObjectInputStream(new FileInputStream("D:\\dataArray.ser"));
             double[][] array = (double[][]) in.readObject();
             in.close();
-            dataArray = array;
+            //dataArray = array;
         }
         catch (Exception e){
             System.out.println("IOException:"+e);
