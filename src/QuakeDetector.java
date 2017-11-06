@@ -7,8 +7,7 @@ public class QuakeDetector {
     int mInputLayerNeurons = 100;
     int mHiddenFirstLayerNeurons = 60;
     int mHiddenSecondLayerNeurons = 30;
-    int mOutputLayerNeurons = 1;
-    double learningRate = 1;
+    double learningRate = 2.5;
 
     double error;
 
@@ -43,17 +42,11 @@ public class QuakeDetector {
         initializeArray(mSecondLayerWeights, mHiddenFirstLayerNeurons, mHiddenSecondLayerNeurons);
         initializeArray(mOutputLayerWeights, mHiddenSecondLayerNeurons, mDatasetsPerEpoch);
 
-        double sum_temp = 0.0;
-        for (double i[] : dataArray) {
-            sum += i[0];
-        }
-        sum -= Math.floor(sum);
-        if(sum >= 0.5) System.out.println("1");
-        else System.out.println("0");
+        initializeArrayWithZeroes(dataArray, mDatasetsPerEpoch, mInputLayerNeurons);
 
 
         int trainCounter = 0;
-        while(trainCounter != 1000){
+        while(trainCounter != 80000){
             trainNetwork();
             trainCounter ++;
         }
@@ -97,6 +90,14 @@ public class QuakeDetector {
         }
     }
 
+    private void initializeArrayWithZeroes(double[][] array, int m, int n) {
+        for (int i = 0; i < m; i++) {
+            for(int j = 0;  j< n; j++) {
+                array[i][j] = 0;
+            }
+        }
+    }
+
     private void trainNetwork() {
         mFirstLayerSummation = matrixMultiply(dataArray, mFirstLayerWeights, mDatasetsPerEpoch, mInputLayerNeurons, mInputLayerNeurons, mHiddenFirstLayerNeurons);
         mSecondLayerSummation = matrixMultiply(mFirstLayerSummation, mSecondLayerWeights, mDatasetsPerEpoch, mHiddenFirstLayerNeurons, mHiddenFirstLayerNeurons, mHiddenSecondLayerNeurons);
@@ -106,7 +107,7 @@ public class QuakeDetector {
 
 
         //Start back propagate. Output neuron is only one and hence doesn't need any separate function.
-        double delta = error * (mOutputLayerSummation[0][0]) * (1 - mOutputLayerSummation[0][0]);
+        double delta = error * (mOutputLayerSummation[0][0]) * (1 - mOutputLayerSummation[0][0]); 
         for (int i = 0; i < mHiddenSecondLayerNeurons; i++) {
             mOutputLayerWeights[i][0] += learningRate * delta * mSecondLayerSummation[0][i];
         }
